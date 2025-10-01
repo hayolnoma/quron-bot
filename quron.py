@@ -18,6 +18,8 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram.helpers import escape_markdown
+from telegram.error import BadRequest
 
 # ----- CONFIG -----
 # BOT_TOKEN endi environment variable'dan olinadi
@@ -42,6 +44,26 @@ UZBEK_SURA_NAMES = {
     2: "Baqara",
     # Boshqa suralar qo'shilishi mumkin
 }
+
+# ----- Helpers -----
+def md_safe(text: str) -> str:
+    """Matnni MarkdownV2 uchun xavfsiz holatga keltiradi."""
+    if text is None:
+        return ""
+    return escape_markdown(str(text), version=2)
+
+
+async def log_and_notify_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Oddiy error handler — server logga chiqaradi, foydalanuvchiga oddiy xabar beradi."""
+    err = getattr(context, "error", None)
+    logger.exception(f"Unhandled error: {err}")
+    try:
+        if update and update.effective_chat:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="⚠️ Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+    except Exception:
+        # agar foydalanuvchiga yuborilmasa — tizza
+        logger.exception("Failed to notify user about the error.")
+
 
 # ----- API -----
 def get_surah_list() -> List[dict]:
@@ -134,16 +156,32 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Botni boshlash: salomlashish va asosiy menyu."""
     user = update.effective_user
     name = html.escape(user.first_name) if user else "Do'stim"
-    text = f"🤲 *Assalamu alaykum, {name}!* \n\nQuyidagi menyudan tanlang:"
+    # MarkdownV2 uchun xavfsiz qilingan text
+    text = f"🤲 Assalamu alaykum, {name}! \n\nQuyidagi menyudan tanlang:"
+    safe_text = md_safe(text)
     kb = main_menu_keyboard()
-    if update.message:
-        await update.message.reply_text(text, parse_mode="Markdown", reply_markup=kb)
-    elif update.callback_query:
-        # agar callback orqali kelgan bo'lsa, eski xabarni tahrirlash
+    try:
+        if update.message:
+            await update.message.reply_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+        elif update.callback_query:
+            # agar callback orqali kelgan bo'lsa, eski xabarni tahrirlash
+            try:
+                await update.callback_query.message.edit_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+            except Exception:
+                await update.callback_query.message.reply_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+    except BadRequest as e:
+        # Agar MarkdownV2 bilan muammo bo'lsa — parse_mode ni olib tashlab oddiy yuborish
+        logger.exception(f"BadRequest in start: {e}. Retrying without parse_mode.")
         try:
-            await update.callback_query.message.edit_text(text, parse_mode="Markdown", reply_markup=kb)
+            if update.message:
+                await update.message.reply_text(text, reply_markup=kb)
+            elif update.callback_query:
+                try:
+                    await update.callback_query.message.edit_text(text, reply_markup=kb)
+                except Exception:
+                    await update.callback_query.message.reply_text(text, reply_markup=kb)
         except Exception:
-            await update.callback_query.message.reply_text(text, parse_mode="Markdown", reply_markup=kb)
+            logger.exception("Failed to send start message without parse_mode.")
 
 
 async def send_surah_page(query, context, page: int = 0, prefix: str = "surah"):
@@ -158,13 +196,17 @@ async def send_surah_page(query, context, page: int = 0, prefix: str = "surah"):
     total_pages = (len(surahs) - 1) // SURAS_PER_PAGE + 1
     kb = build_surah_page_keyboard(surahs, page, prefix)
     title = "Qur'on suralari" if prefix == "surah" else "Qur'on tarjimasi"
-    text = f"📚 *{title}* (sahifa {page+1}/{total_pages})"
+    text = f"📚 {title} (sahifa {page+1}/{total_pages})"
+    safe_text = md_safe(text)
 
     try:
-        await query.message.edit_text(text, parse_mode="Markdown", reply_markup=kb)
-    except Exception:
-        # Agar tahrirlash mumkin bo'lmasa (masalan, birinchi marta), yangi xabar
-        await query.message.reply_text(text, parse_mode="Markdown", reply_markup=kb)
+        await query.message.edit_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+    except BadRequest:
+        # Agar tahrirlash Markdown bilan xato qilsa, oddiy yuborish
+        try:
+            await query.message.reply_text(text, reply_markup=kb)
+        except Exception:
+            logger.exception("Failed to send surah page message.")
 
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -209,12 +251,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Suralarga", callback_data="menu_surah"),
              InlineKeyboardButton("🏠 Asosiy", callback_data="back_to_main")]
         ])
-        await query.message.edit_text(
-            f"🕌 *{sura_name}* ({surah['name']})\n"
-            f"📖 Oyatlar soni: {surah['numberOfAyahs']}\n"
-            f"🎙 Qori: Mishari Alafasy",
-            parse_mode="Markdown", reply_markup=kb
-        )
+        text = f"🕌 {sura_name} ({surah['name']})\n📖 Oyatlar soni: {surah['numberOfAyahs']}\n🎙 Qori: Mishari Alafasy"
+        safe_text = md_safe(text)
+        try:
+            await query.message.edit_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+        except BadRequest:
+            await query.message.edit_text(text, reply_markup=kb)
         return
 
     # Tarjima
@@ -229,10 +271,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Suralarga", callback_data="menu_translation"),
              InlineKeyboardButton("🏠 Asosiy", callback_data="back_to_main")]
         ])
-        await query.message.edit_text(
-            f"🌐 {sura_name} tarjimasi (Shayx Muhammad Sodiq).",
-            parse_mode="Markdown", reply_markup=kb
-        )
+        text = f"🌐 {sura_name} tarjimasi (Shayx Muhammad Sodiq)."
+        safe_text = md_safe(text)
+        try:
+            await query.message.edit_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+        except BadRequest:
+            await query.message.edit_text(text, reply_markup=kb)
         return
 
     # Rejim tanlash
@@ -242,10 +286,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["mode"] = mode
         context.user_data["chosen_surah"] = surah_num
         sura_name = UZBEK_SURA_NAMES.get(surah_num, f"{surah_num}-sura")
-        await query.message.edit_text(
-            f"{sura_name} uchun oyat oralig'ini kiriting (masalan: `1-6`).",
-            parse_mode="Markdown", reply_markup=back_to_menu_keyboard("surah" if mode in ["text", "audio"] else "translation")
-        )
+        text = f"{sura_name} uchun oyat oralig'ini kiriting (masalan: 1-6)."
+        safe_text = md_safe(text)
+        kb = back_to_menu_keyboard("surah" if mode in ["text", "audio"] else "translation")
+        try:
+            await query.message.edit_text(safe_text, parse_mode="MarkdownV2", reply_markup=kb)
+        except BadRequest:
+            await query.message.edit_text(text, reply_markup=kb)
         return
 
 
@@ -253,7 +300,7 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
     """Oyat oralig'ini qayta ishlash."""
     text = (update.message.text or "").strip()
     if not re.match(r"^\d+-\d+$", text):
-        await update.message.reply_text("⚠️ Format noto‘g‘ri. Masalan: `5-10`", reply_markup=back_to_menu_keyboard(context.user_data.get("prefix", "surah")))
+        await update.message.reply_text("⚠️ Format noto‘g‘ri. Masalan: 5-10", reply_markup=back_to_menu_keyboard(context.user_data.get("prefix", "surah")))
         return
     try:
         a, b = map(int, text.split("-"))
@@ -264,7 +311,7 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await update.message.reply_text("⚠️ Boshlang‘ich oyat oxirgisidan katta bo‘lmasligi kerak.", reply_markup=back_to_menu_keyboard(context.user_data.get("prefix", "surah")))
             return
     except ValueError:
-        await update.message.reply_text("⚠️ Faqat raqam kiriting. Masalan: `2-5`", reply_markup=back_to_menu_keyboard(context.user_data.get("prefix", "surah")))
+        await update.message.reply_text("⚠️ Faqat raqam kiriting. Masalan: 2-5", reply_markup=back_to_menu_keyboard(context.user_data.get("prefix", "surah")))
         return
 
     surah_num = context.user_data.get("chosen_surah")
@@ -287,8 +334,14 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
         out = []
         for i in range(a-1, b):
             num = ayahs[i]["numberInSurah"]
-            out.append(f"*{num}.* {ayahs[i]['text']}")
-        await update.message.reply_text("\n".join(out), parse_mode="Markdown", reply_markup=back_to_menu_keyboard("surah"))
+            # qatorlarni MarkdownV2 uchun qochiramiz
+            out.append(f"{num}. {ayahs[i]['text']}")
+        result = "\n".join(out)
+        safe_result = md_safe(result)
+        try:
+            await update.message.reply_text(safe_result, parse_mode="MarkdownV2", reply_markup=back_to_menu_keyboard("surah"))
+        except BadRequest:
+            await update.message.reply_text(result, reply_markup=back_to_menu_keyboard("surah"))
 
     elif mode == "audio":  # Arabcha audio
         any_audio = False
@@ -300,7 +353,12 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     bio = BytesIO(audio_data)
                     bio.name = f"{surah_num}_{i}.mp3"
                     bio.seek(0)
-                    await update.message.reply_audio(audio=bio, caption=f"{surah_num}-sura {i}-oyat (arabcha)")
+                    caption = f"{surah_num}-sura {i}-oyat (arabcha)"
+                    safe_caption = md_safe(caption)
+                    try:
+                        await update.message.reply_audio(audio=bio, caption=safe_caption, parse_mode="MarkdownV2")
+                    except BadRequest:
+                        await update.message.reply_audio(audio=bio, caption=caption)
                     any_audio = True
                 except Exception as e:
                     logger.exception(f"audio sending error: {e}")
@@ -314,8 +372,13 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
         ay_uz = resp_uz["data"]["ayahs"]
         out = []
         for i in range(a-1, b):
-            out.append(f"*{ayahs[i]['numberInSurah']}.* {ayahs[i]['text']}\n_{ay_uz[i]['text']}_")
-        await update.message.reply_text("\n\n".join(out), parse_mode="Markdown", reply_markup=back_to_menu_keyboard("translation"))
+            out.append(f"{ayahs[i]['numberInSurah']}. {ayahs[i]['text']}\n{ay_uz[i]['text']}")
+        result = "\n\n".join(out)
+        safe_result = md_safe(result)
+        try:
+            await update.message.reply_text(safe_result, parse_mode="MarkdownV2", reply_markup=back_to_menu_keyboard("translation"))
+        except BadRequest:
+            await update.message.reply_text(result, reply_markup=back_to_menu_keyboard("translation"))
 
     elif mode == "trans_audio":  # Uzbek matni + Arab audio
         resp_uz = get_surah_detail(surah_num, "uz.sodik")
@@ -325,7 +388,12 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
         ay_uz = resp_uz["data"]["ayahs"]
         any_audio = False
         for i in range(a, b+1):
-            await update.message.reply_text(f"{i}-oyat tarjimasi:\n_{ay_uz[i-1]['text']}_", parse_mode="Markdown")
+            text_for_user = f"{i}-oyat tarjimasi:\n{ay_uz[i-1]['text']}"
+            safe_text_for_user = md_safe(text_for_user)
+            try:
+                await update.message.reply_text(safe_text_for_user, parse_mode="MarkdownV2")
+            except BadRequest:
+                await update.message.reply_text(text_for_user)
             url = get_ayah_audio_url(surah_num, i, ARAB_RECITER)  # Faqat arabcha audio
             if url:
                 try:
@@ -333,7 +401,12 @@ async def handle_range_input(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     bio = BytesIO(audio_data)
                     bio.name = f"{surah_num}_{i}.mp3"
                     bio.seek(0)
-                    await update.message.reply_audio(audio=bio, caption=f"{surah_num}-sura {i}-oyat (arabcha)")
+                    caption = f"{surah_num}-sura {i}-oyat (arabcha)"
+                    safe_caption = md_safe(caption)
+                    try:
+                        await update.message.reply_audio(audio=bio, caption=safe_caption, parse_mode="MarkdownV2")
+                    except BadRequest:
+                        await update.message.reply_audio(audio=bio, caption=caption)
                     any_audio = True
                 except Exception as e:
                     logger.exception(f"audio sending error: {e}")
@@ -347,9 +420,23 @@ def main():
         logger.error("❌ BOT_TOKEN environment variable o‘rnatilmagan! Iltimos, uni ENV da belgilang.")
         return
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    # Handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_range_input))
+
+    # Error handler — shunda xatolikda container crash bo'lmaydi va logga tushadi
+    async def _error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+        logger.exception(f"Error while handling an update: {getattr(context, 'error', None)}")
+        # optional: notify user in chat
+        try:
+            if isinstance(update, Update) and update.effective_chat:
+                await update.effective_chat.send_message("⚠️ Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+        except Exception:
+            logger.exception("Failed to notify user about the error.")
+    app.add_error_handler(_error_handler)
+
     logger.info("✅ Quran bot ishga tushdi.")
     app.run_polling()
 
