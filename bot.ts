@@ -1,5 +1,5 @@
 
-import { Bot, Context, session, SessionFlavor } from 'grammy';
+import { Bot, Context, session, SessionFlavor, InlineKeyboard } from 'grammy';
 import { SessionData } from './types';
 import { Keyboards } from './keyboards';
 import { quranService } from './quran-service';
@@ -79,6 +79,22 @@ bot.callbackQuery(/page_(\d+)/, async (ctx) => {
   const surahs = await quranService.getSurahs();
   await ctx.editMessageText("📖 Suralar ro'yxati:", {
     reply_markup: Keyboards.surahList(surahs, page)
+  });
+});
+
+bot.callbackQuery('guide', async (ctx) => {
+  const guideText = `<b>📖 Botdan foydalanish bo'yicha qo'llanma</b>\n\n` +
+    `1. <b>Suralarni ko'rish:</b> "Suralar ro'yxati" tugmasi orqali barcha suralarni topishingiz va o'qishingiz mumkin.\n\n` +
+    `2. <b>Oyatlar diapazoni:</b> Botga sura va oyatlar raqamini yozib yuborsangiz, bot sizga audiolarni jamlab beradi.\n` +
+    `   <i>Misol:</i> <code>1:1-7</code> yoki <code>2:255-257</code>\n\n` +
+    `3. <b>Audio tinglash:</b> Har bir oyatning pastida alohida audio tugmasi mavjud bo'lib, u orqali Mishari Rashid Al-Afasiy qiroatini tinglashingiz mumkin.\n\n` +
+    `4. <b>Navigatsiya:</b> Oyatlar orasida "Oldingi" va "Keyingi" tugmalari orqali osongina harakatlanishingiz mumkin.\n\n` +
+    `<i>Yaqin kunlarda ushbu bo'limga video qo'llanma ham qo'shiladi!</i>`;
+
+  // Fix: Added InlineKeyboard to imports to avoid "Cannot find name 'InlineKeyboard'" error.
+  await ctx.editMessageText(guideText, {
+    parse_mode: 'HTML',
+    reply_markup: new InlineKeyboard().text("🏠 Orqaga", "back_to_main")
   });
 });
 

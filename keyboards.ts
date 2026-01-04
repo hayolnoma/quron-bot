@@ -7,7 +7,7 @@ export const Keyboards = {
     return new InlineKeyboard()
       .text("📖 Suralar ro'yxati", "list_surahs")
       .row()
-      .text("⚙️ Sozlamalar", "settings");
+      .text("📖 Qo'llanma", "guide");
   },
 
   surahList: (surahs: Surah[], page: number = 0) => {
@@ -33,7 +33,6 @@ export const Keyboards = {
   ayahNavigation: (surahNum: number, currentAyah: number, totalAyahs: number) => {
     const keyboard = new InlineKeyboard();
     
-    // Audio tugmasi qoldirildi, AI Tafsir olib tashlandi
     keyboard.text("🔊 Audio", `audio_${surahNum}_${currentAyah}`).row();
 
     if (currentAyah > 1) {
