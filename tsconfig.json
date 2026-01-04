@@ -10,8 +10,9 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "outDir": "./dist",
+    "rootDir": "./",
     "types": ["node"]
   },
   "include": ["**/*.ts"],
-  "exclude": ["node_modules", "vite.config.ts", "dist"]
+  "exclude": ["node_modules", "dist"]
 }

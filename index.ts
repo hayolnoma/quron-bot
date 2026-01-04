@@ -1,38 +1,26 @@
-
-import express from "express";
 import { webhookCallback } from "grammy";
-import * as dotenv from "dotenv";
+import express from "express";
 import { bot } from "./bot";
 
-dotenv.config();
-
 const app = express();
-app.use(express.json() as any);
+app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
-const DOMAIN = process.env.WEBHOOK_URL;
+// Telegram webhook so'rovlarini qabul qilish
+// Bu yo'l Vercel'dagi /api/webhook manziliga mos keladi
+app.post("/api/webhook", webhookCallback(bot, "express"));
 
-app.get("/", (req: any, res: any) => {
-  res.status(200).send({ 
-    status: "active", 
-    service: "Quran Bot Pro", 
-    mode: process.env.NODE_ENV || "development" 
-  });
+// Asosiy sahifa (ishlayotganini tekshirish uchun)
+app.get("/", (req, res) => {
+  res.status(200).send("Quran Bot is active and running on Vercel!");
 });
 
-if (process.env.NODE_ENV === "production") {
-  if (!DOMAIN) {
-    console.error("❌ WEBHOOK_URL (.env) kiritilmagan!");
-    process.exit(1);
-  }
-  app.use("/webhook", webhookCallback(bot, "express") as any);
-  app.listen(PORT, async () => {
-    await bot.api.setWebhook(`${DOMAIN}/webhook`);
-    console.log(`🚀 Bot PRODUCTION (Webhook) rejimida`);
-  });
-} else {
-  app.listen(PORT, () => {
-    console.log(`🛠 Bot DEVELOPMENT (Polling) rejimida`);
-    bot.start({ drop_pending_updates: true });
+// Vercel serverless muhitida ishlash uchun eksport
+export default app;
+
+// Mahalliy test qilish uchun (agar kerak bo'lsa)
+if (process.env.NODE_ENV !== "production") {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Server locally running on http://localhost:${port}`);
   });
 }
