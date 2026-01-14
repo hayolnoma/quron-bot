@@ -1,0 +1,28 @@
+
+import { webhookCallback } from "grammy";
+import express from "express";
+import { bot } from "./bot";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+const app = express();
+// Fix for line 10: Use 'as any' to avoid 'No overload matches this call' error caused by internal Express type version conflicts
+app.use(express.json() as any);
+
+/**
+ * Telegram Webhook endpoint
+ * Koyeb yoki Vercel botga kelgan so'rovlarni shu manzilga yuboradi
+ */
+app.post("/api/webhook", webhookCallback(bot, "express"));
+
+// Asosiy sahifada bot holatini tekshirish uchun ixtiyoriy endpoint
+app.get("/", (req, res) => {
+  res.status(200).send("Bot is running...");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Bot server is running on port ${PORT}`);
+  console.log(`📡 Webhook URL: https://YOUR_DOMAIN/api/webhook`);
+});
