@@ -1,33 +1,28 @@
+
 import { webhookCallback } from "grammy";
 import express from "express";
 import { bot } from "./bot";
-import path from "path";
-import { fileURLToPath } from "url";
+import * as dotenv from "dotenv";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
 const app = express();
-app.use(express.json());
-
-// Telegram Webhook endpoint
-app.post("/api/webhook", webhookCallback(bot, "express"));
+// Fix for line 10: Use 'as any' to avoid 'No overload matches this call' error caused by internal Express type version conflicts
+app.use(express.json() as any);
 
 /**
- * Vite build qilgan static fayllarni xizmat ko'rsatish (Landing Page)
- * Build jarayonida fayllar 'dist/public' papkasiga tushadi
+ * Telegram Webhook endpoint
+ * Bot tokeningiz xavfsizligi uchun maxfiy yo'l ishlatsangiz ham bo'ladi: /api/webhook/${process.env.TELEGRAM_BOT_TOKEN}
  */
-const publicPath = path.join(__dirname, "public");
-app.use(express.static(publicPath));
+app.post("/api/webhook", webhookCallback(bot, "express"));
 
-// Barcha boshqa so'rovlar uchun index.html ni qaytarish
-app.get("*", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
+// Asosiy sahifada bot holatini ko'rsatish (ixtiyoriy)
+app.get("/", (req, res) => {
+  res.status(200).send("Bot is running...");
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Bot server is running on port ${PORT}`);
+  console.log(`📡 Webhook URL should be: https://YOUR_DOMAIN/api/webhook`);
 });
-
-export default app;
