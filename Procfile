@@ -1,1 +1,1 @@
-worker: python quron.py
+web: npm start
