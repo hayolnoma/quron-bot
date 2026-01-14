@@ -1,31 +1,35 @@
 import { webhookCallback } from "grammy";
 import express from "express";
 import { bot } from "./bot";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(express.json());
+// Webhook POST so'rovlarini qabul qilish uchun json middleware
+app.use(express.json() as any);
 
 /**
- * Telegram webhook yo'li.
- * Vercel.json va Telegram setWebhook sozlamalarida ko'rsatilgan manzil.
+ * Telegram Webhook endpoint
+ * Koyeb yoki Vercel botga kelgan so'rovlarni shu manzilga yuboradi
  */
 app.post("/api/webhook", webhookCallback(bot, "express"));
 
 /**
- * Asosiy sahifa - bot holatini tekshirish uchun.
+ * Frontend xizmati (Landing Page)
+ * Vite build jarayonida fayllarni 'dist/public' papkasiga joylaydi
  */
-app.get("/", (req, res) => {
-  res.status(200).send("Qur'on Bot tizimi muvaffaqiyatli ishga tushirildi (Webhook faol)!");
+const publicPath = path.join(__dirname, "public");
+app.use(express.static(publicPath) as any);
+
+// SPA routing - barcha boshqa so'rovlar uchun index.html ni qaytaradi
+app.get("*", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
 });
 
-export default app;
-
-/**
- * Local muhitda test qilish uchun.
- */
-if (process.env.NODE_ENV !== "production") {
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Lokal server: http://localhost:${port}`);
-  });
-}
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server ${PORT}-portda ishlamoqda`);
+});

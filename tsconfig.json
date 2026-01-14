@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -10,8 +10,9 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./",
-    "allowJs": true
+    "allowJs": true,
+    "jsx": "react-jsx"
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist", "index.tsx"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
 }

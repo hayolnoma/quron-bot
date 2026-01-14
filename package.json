@@ -8,7 +8,7 @@
     "start": "node dist/index.js",
     "dev": "vite",
     "build": "vite build && tsc",
-    "bot": "nodemon --exec ts-node index.ts"
+    "bot": "tsx index.ts"
   },
   "dependencies": {
     "grammy": "^1.20.0",
@@ -24,10 +24,8 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "ts-node": "^10.9.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.2",
-    "nodemon": "^3.0.1",
     "vite": "^5.4.0"
   }
 }
