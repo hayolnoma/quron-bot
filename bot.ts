@@ -11,11 +11,12 @@ export type MyContext = Context & SessionFlavor<SessionData>;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
 if (!token) {
-  console.warn("DIQQAT: TELEGRAM_BOT_TOKEN topilmadi. Vercel Environment Variables sozlamalarini tekshiring.");
+  throw new Error("XATO: TELEGRAM_BOT_TOKEN environment variable topilmadi!");
 }
 
-export const bot = new Bot<MyContext>(token || "dummy_token");
+export const bot = new Bot<MyContext>(token);
 
+// Sessiya boshqaruvi
 bot.use(session({ initial: (): SessionData => ({ language: 'uz' }) }));
 
 bot.catch((err) => {
@@ -26,47 +27,12 @@ bot.catch((err) => {
 bot.command('start', async (ctx) => {
   await ctx.reply(
     "<b>Assalomu alaykum!</b> Qur'on botiga xush kelibsiz.\n\n" +
-    "Suralarni tanlash uchun quyidagi tugmalardan foydalaning yoki diapazon yuboring (masalan: 1:1-5).",
+    "Suralarni o'qish va tinglash uchun quyidagi menyudan foydalaning.",
     { reply_markup: Keyboards.mainMenu(), parse_mode: 'HTML' }
   );
 });
 
-// --- MATNLI QIDIRUV (DIAPAZON) ---
-bot.hears(/^(\d+)[:\s-](\d+)-(\d+)$/, async (ctx) => {
-  if (!ctx.match) return;
-  
-  const surahNum = parseInt(ctx.match[1]);
-  const startAyah = parseInt(ctx.match[2]);
-  const endAyah = parseInt(ctx.match[3]);
-
-  if (startAyah > endAyah || (endAyah - startAyah) > 9) {
-    return ctx.reply("⚠️ Diapazon noto'g'ri yoki juda katta (maksimum 10 ta oyat yubora olaman).");
-  }
-
-  const statusMsg = await ctx.reply("🔄 Audiolar tayyorlanmoqda...");
-
-  try {
-    const audioGroup: any[] = [];
-    for (let i = startAyah; i <= endAyah; i++) {
-      const audioUrl = await quranService.getAyahAudio(surahNum, i);
-      audioGroup.push({
-        type: "audio",
-        media: audioUrl,
-        caption: `${surahNum}-sura, ${i}-oyat`
-      });
-    }
-    await ctx.replyWithMediaGroup(audioGroup);
-    if (ctx.chat) {
-      await ctx.api.deleteMessage(ctx.chat.id, statusMsg.message_id).catch(() => {});
-    }
-  } catch (error) {
-    if (ctx.chat) {
-      await ctx.api.editMessageText(ctx.chat.id, statusMsg.message_id, "❌ Audio yuklashda xatolik.").catch(() => {});
-    }
-  }
-});
-
-// --- CALLBACK QUERY ---
+// --- CALLBACK QUERY ISHLOVCHILARI ---
 bot.callbackQuery('list_surahs', async (ctx) => {
   const surahs = await quranService.getSurahs();
   await ctx.editMessageText("📖 Kerakli surani tanlang:", {
@@ -84,7 +50,7 @@ bot.callbackQuery(/page_(\d+)/, async (ctx) => {
 
 bot.callbackQuery('guide', async (ctx) => {
   await ctx.editMessageText(
-    "<b>📚 Qo'llanma</b>\n\n1. Suralar ro'yxatidan surani tanlang.\n2. Oyatni tanlab ma'nosini o'qing.\n3. Audio tugmasi orqali qiroatni tinglang.\n4. Diapazon yuborish: <code>1:1-7</code> ko'rinishida yozing.",
+    "<b>📚 Qo'llanma</b>\n\n1. Suralar ro'yxatidan surani tanlang.\n2. Oyatni tanlab ma'nosini o'qing.\n3. Audio tugmasi orqali qiroatni tinglang.",
     { parse_mode: 'HTML', reply_markup: Keyboards.mainMenu() }
   );
 });
@@ -128,8 +94,9 @@ bot.callbackQuery(/audio_(\d+)_(\d+)/, async (ctx) => {
   try {
     const audioUrl = await quranService.getAyahAudio(surahNum, ayahNum);
     await ctx.replyWithAudio(audioUrl, { title: `${ayahNum}-oyat` });
+    await ctx.answerCallbackQuery();
   } catch (e) {
-    await ctx.answerCallbackQuery("Audio xatosi.");
+    await ctx.answerCallbackQuery("Audio yuklashda xatolik.");
   }
 });
 
