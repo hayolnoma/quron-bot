@@ -18,4 +18,8 @@ export interface Ayah {
 
 export interface SessionData {
   language: 'uz' | 'ar';
+  currentSurahNum?: number;
+  awaitingRange?: boolean;
+  awaitingAudioRange?: boolean;
+  awaitingSearch?: boolean;
 }

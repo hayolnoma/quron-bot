@@ -2,48 +2,49 @@ import { webhookCallback } from "grammy";
 import express from "express";
 import { bot } from "./bot.js";
 import * as dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json() as any);
 
 /**
- * Telegram Webhook endpoint
+ * PRODUCTION (Vercel) uchun webhook handler
+ * Vercel-da bot har bir so'rovda qayta ishga tushadi (serverless)
  */
-app.post("/api/webhook", webhookCallback(bot, "express"));
+const WEBHOOK_PATH = "/api/webhook";
 
-/**
- * Static fayllarni xizmat qilish (Landing Page)
- * Builddan keyin static fayllar 'dist/client' yoki 'dist' ichida bo'lishi mumkin
- */
-const publicPath = path.join(__dirname, "dist");
-app.use(express.static(publicPath) as any);
+// Vercel-da production muhitini tekshirish
+if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+  app.post(WEBHOOK_PATH, webhookCallback(bot, "express"));
+  console.log("🚀 Webhook handler registered for production.");
+}
 
-// Barcha sahifalar uchun index.html (SPA xulq-atvori)
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-
-  res.sendFile(path.join(publicPath, "index.html"), (err) => {
-    if (err) {
-      res.status(200).send("Qur'on Bot is running. Landing page building...");
-    }
-  });
+// Asosiy sahifa (Bot holatini tekshirish uchun)
+app.get("/", (req, res) => {
+  res.status(200).send("🕌 Qur'on Bot is running perfectly on Vercel!");
 });
 
-// Vercel uchun export (app ni listen qilmasdan)
-export default app;
+// Lokal rivojlantirish (Long Polling)
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  (async () => {
+    try {
+      console.log("📡 Webhook tozalanmoqda (Lokal)...");
+      await bot.api.deleteWebhook();
 
-// Faqat lokalda ishlash uchun
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = parseInt(process.env.PORT || "3000", 10);
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Lokal server ishga tushdi: http://localhost:${PORT}`);
-    console.log(`📡 Webhook: /api/webhook`);
+      console.log("🛠 Bot Long Polling rejimida ishga tushmoqda...");
+      bot.start({
+        onStart: (botInfo) => console.log(`✅ Bot @${botInfo.username} lokalda tayyor!`),
+      });
+    } catch (e) {
+      console.error("❌ Lokal startda xatolik:", e);
+    }
+  })();
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Lokal server: http://localhost:${PORT}`);
   });
 }
+
+export default app;

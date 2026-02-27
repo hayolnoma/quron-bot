@@ -6,7 +6,8 @@ export const Keyboards = {
     return new InlineKeyboard()
       .text("📖 Suralar ro'yxati", "list_surahs")
       .row()
-      .text("📖 Qo'llanma", "guide");
+      .text("📚 Qo'llanma", "guide")
+      .text("ℹ️ Bot haqida", "about");
   },
 
   surahList: (surahs: Surah[], page: number = 0) => {
@@ -15,25 +16,42 @@ export const Keyboards = {
     const start = page * itemsPerPage;
     const currentItems = surahs.slice(start, start + itemsPerPage);
 
+    // Qidiruv tugmasi (Avtomatik inline qidiruvni yoqish)
+    keyboard.switchInlineCurrent("🔍 Sura qidirish", "").row();
+
     currentItems.forEach((s, idx) => {
       keyboard.text(`${s.number}. ${s.englishName}`, `view_surah_${s.number}`);
       if (idx % 2 !== 0) keyboard.row();
     });
 
     keyboard.row();
-    if (page > 0) keyboard.text("⬅️", `page_${page - 1}`);
+    if (page > 0) keyboard.text("⬅️ Oldingi", `page_${page - 1}`);
     const totalPages = Math.ceil(surahs.length / itemsPerPage);
-    keyboard.text(`${page + 1} / ${totalPages}`, "noop");
-    if (start + itemsPerPage < surahs.length) keyboard.text("➡️", `page_${page + 1}`);
+    keyboard.text(`📃 ${page + 1} / ${totalPages}`, "noop");
+    if (start + itemsPerPage < surahs.length) keyboard.text("Keyingi ➡️", `page_${page + 1}`);
 
     return keyboard.row().text("🏠 Asosiy menyu", "back_to_main");
+  },
+
+  surahDetail: (surahNum: number) => {
+    return new InlineKeyboard()
+      .text("📖 Oyatma-oyat o'qish", `ayah_${surahNum}_1`)
+      .row()
+      .text("🕌 Arabcha matn", `range_ar_${surahNum}`)
+      .text("🎧 Audio (range)", `range_audio_${surahNum}`)
+      .row()
+      .text("⬅️ Orqaga", "list_surahs")
+      .text("🏠 Menyu", "back_to_main");
   },
 
   ayahNavigation: (surahNum: number, currentAyah: number, totalAyahs: number) => {
     const keyboard = new InlineKeyboard();
 
-    keyboard.text("🔊 Audio", `audio_${surahNum}_${currentAyah}`).row();
+    // Asosiy harakatlar
+    keyboard.text("🔊 Tinglash", `audio_${surahNum}_current_${currentAyah}`)
+      .row();
 
+    // Navigatsiya
     if (currentAyah > 1) {
       keyboard.text("⬅️ Oldingi", `ayah_${surahNum}_${currentAyah - 1}`);
     }
@@ -43,7 +61,9 @@ export const Keyboards = {
     }
 
     return keyboard.row()
-      .text("📚 Sura ro'yxatiga", "list_surahs")
-      .text("🏠 Menyu", "back_to_main");
+      .text("📋 Sura ma'lumoti", `view_surah_${surahNum}`)
+      .row()
+      .text("📚 Suralar ro'yxati", "list_surahs")
+      .text("🏠 Asosiy menyu", "back_to_main");
   }
 };
