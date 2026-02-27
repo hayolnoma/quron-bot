@@ -11,7 +11,7 @@ export type MyContext = Context & SessionFlavor<SessionData>;
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) {
-  console.warn("⚠️ TELEGRAM_BOT_TOKEN is not set!");
+  console.warn("⚠️ TELEGRAM_BOT_TOKEN isn't set!");
 }
 
 export const bot = new Bot<MyContext>(token || 'DUMMY_TOKEN_FOR_INITIALIZATION');
