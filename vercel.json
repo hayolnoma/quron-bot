@@ -12,8 +12,8 @@
       "dest": "index.tsx"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
+      "src": "/bot",
+      "dest": "index.tsx"
     },
     {
       "src": "/(.*)",

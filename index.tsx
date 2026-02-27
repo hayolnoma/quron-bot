@@ -10,19 +10,26 @@ app.use(express.json() as any);
 
 /**
  * PRODUCTION (Vercel) uchun webhook handler
- * Vercel-da bot har bir so'rovda qayta ishga tushadi (serverless)
  */
-const WEBHOOK_PATH = "/api/webhook";
 
-// Vercel-da production muhitini tekshirish
-if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-  app.post(WEBHOOK_PATH, webhookCallback(bot, "express"));
-  console.log("🚀 Webhook handler registered for production.");
-}
+// Webhook mantiqi - /api/webhook va /bot ikkalasini ham qo'llab-quvvatlaydi
+const handleUpdate = webhookCallback(bot, "express");
 
-// Asosiy sahifa (Bot holatini tekshirish uchun)
+app.post("/api/webhook", handleUpdate);
+app.post("/bot", handleUpdate);
+
+// Asosiy sahifa
 app.get("/", (req, res) => {
   res.status(200).send("🕌 Qur'on Bot is running perfectly on Vercel!");
+});
+
+// Bot holati haqida qisqacha ma'lumot
+app.get("/status", (req, res) => {
+  res.json({
+    status: "ok",
+    bot_token_set: !!process.env.TELEGRAM_BOT_TOKEN,
+    node_env: process.env.NODE_ENV
+  });
 });
 
 // Lokal rivojlantirish (Long Polling)
