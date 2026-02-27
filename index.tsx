@@ -8,11 +8,12 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Webhook mantiqi - /api/webhook va /bot ikkalasini ham qo'llab-quvvatlaydi
-const handleUpdate = webhookCallback(bot, "express");
-
-app.post("/api/webhook", (req, res) => handleUpdate(req, res));
-app.post("/bot", (req, res) => handleUpdate(req, res));
+// Webhook mantiqi - Faqat production/Vercel muhitida ishlaydi
+if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+  const handleUpdate = webhookCallback(bot, "express");
+  app.post("/api/webhook", (req, res) => handleUpdate(req, res));
+  app.post("/bot", (req, res) => handleUpdate(req, res));
+}
 
 // Asosiy sahifa
 app.get("/", (req, res) => {
