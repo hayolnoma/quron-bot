@@ -1,6 +1,5 @@
-
 import { InlineKeyboard } from 'grammy';
-import { Surah } from './types';
+import { Surah } from './types.js';
 
 export const Keyboards = {
   mainMenu: () => {
@@ -26,23 +25,23 @@ export const Keyboards = {
     const totalPages = Math.ceil(surahs.length / itemsPerPage);
     keyboard.text(`${page + 1} / ${totalPages}`, "noop");
     if (start + itemsPerPage < surahs.length) keyboard.text("➡️", `page_${page + 1}`);
-    
+
     return keyboard.row().text("🏠 Asosiy menyu", "back_to_main");
   },
 
   ayahNavigation: (surahNum: number, currentAyah: number, totalAyahs: number) => {
     const keyboard = new InlineKeyboard();
-    
+
     keyboard.text("🔊 Audio", `audio_${surahNum}_${currentAyah}`).row();
 
     if (currentAyah > 1) {
       keyboard.text("⬅️ Oldingi", `ayah_${surahNum}_${currentAyah - 1}`);
     }
-    
+
     if (currentAyah < totalAyahs) {
       keyboard.text("Keyingi ➡️", `ayah_${surahNum}_${currentAyah + 1}`);
     }
-    
+
     return keyboard.row()
       .text("📚 Sura ro'yxatiga", "list_surahs")
       .text("🏠 Menyu", "back_to_main");

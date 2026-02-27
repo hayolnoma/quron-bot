@@ -1,7 +1,7 @@
 import { Bot, Context, session, SessionFlavor } from 'grammy';
-import { SessionData } from './types';
-import { Keyboards } from './keyboards';
-import { quranService } from './quran-service';
+import { SessionData } from './types.js';
+import { Keyboards } from './keyboards.js';
+import { quranService } from './quran-service.js';
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -67,7 +67,7 @@ bot.callbackQuery(/view_surah_(\d+)/, async (ctx) => {
 bot.callbackQuery(/ayah_(\d+)_(\d+)/, async (ctx) => {
   const surahNum = parseInt(ctx.match![1]);
   const ayahNum = parseInt(ctx.match![2]);
-  
+
   try {
     const [uzAyah, arAyah, surah] = await Promise.all([
       quranService.getAyah(surahNum, ayahNum, 'uz.sodik'),
@@ -76,8 +76,8 @@ bot.callbackQuery(/ayah_(\d+)_(\d+)/, async (ctx) => {
     ]);
 
     const message = `📖 <b>${surah.englishName}, ${ayahNum}-oyat</b>\n\n` +
-                    `${arAyah.text}\n\n` +
-                    `🇺🇿 <b>Ma'nosi:</b>\n${uzAyah.text}`;
+      `${arAyah.text}\n\n` +
+      `🇺🇿 <b>Ma'nosi:</b>\n${uzAyah.text}`;
 
     await ctx.editMessageText(message, {
       parse_mode: 'HTML',

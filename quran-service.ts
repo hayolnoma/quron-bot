@@ -1,6 +1,5 @@
-
 import axios, { AxiosInstance } from 'axios';
-import { Surah, Ayah } from './types';
+import { Surah, Ayah } from './types.js';
 
 class QuranService {
   private api: AxiosInstance;

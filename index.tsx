@@ -1,6 +1,6 @@
 import { webhookCallback } from "grammy";
 import express from "express";
-import { bot } from "./bot";
+import { bot } from "./bot.js";
 import * as dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
