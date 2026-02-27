@@ -82,13 +82,13 @@ bot.callbackQuery('guide', async (ctx) => {
 
 bot.callbackQuery('about', async (ctx) => {
   const aboutText =
-    `<b>✨ Qur'on Bot (Pro) — Ma'naviy hamrohingiz</b>\n\n` +
-    `Ushbu bot muقدس Qur'onni o'rganishni xohlovchilar uchun maxsus ishlab chiqilgan.\n\n` +
+    `<b>✨ Qur'on Bot — Ma'naviy hamrohingiz</b>\n\n` +
+    `Ushbu bot muqaddas Qur'onni o'rganishni xohlovchilar uchun maxsus ishlab chiqilgan.\n\n` +
     `<b>🔹 Manbalar va Mualliflar:</b>\n` +
     `• 📖 <b>Tarjimasi:</b> Shayx Muhammad Sodiq Muhammad Yusuf hazratlari.\n` +
     `• 🎙 <b>Qiroat:</b> Mishari Rashid Alafasy.\n` +
-    `• 📡 <b>Texnologiya:</b> Al Quran Cloud API.\n\n` +
-    `🚀 <i>Versiya: 1.3.0 (Premium)</i>`;
+    `• 📡 <b>Texnologiya:</b> <a href="https://alquran.cloud/api">Al Quran Cloud API</a>.\n\n` +
+    `🚀 <i>Dasturchi: @asking_robot</i>`;
 
   await ctx.editMessageText(aboutText, {
     parse_mode: 'HTML',
@@ -386,8 +386,8 @@ bot.command('start', async (ctx, next) => {
   // Buning uchun biz avvalgi command('start') ni o'rniga shu yerni to'liq yozamiz
   const welcomeText =
     `👋 <b>Assalomu alaykum, ${ctx.from?.first_name}!</b>\n\n` +
-    `📖 <b>Qur'on Bot (Pro)</b>ga xush kelibsiz.\n\n` +
-    `Ushbu bot orqali muقدس Qur'on suralarini o'qishingiz, ma'nolarini o'rganishingiz va qiroatlarni tinglashingiz mumkin.\n\n` +
+    `📖 <b>Qur'on Bot</b>ga xush kelibsiz.\n\n` +
+    `Ushbu bot orqali muqaddas Qur'on suralarini o'qishingiz, ma'nolarini o'rganishingiz va qiroatlarni tinglashingiz mumkin.\n\n` +
     `👇 Davom etish uchun quyidagi menyundan foydalaning:`;
 
   await ctx.reply(welcomeText, {
