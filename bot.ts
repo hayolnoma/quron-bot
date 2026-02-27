@@ -9,7 +9,12 @@ dotenv.config();
 
 export type MyContext = Context & SessionFlavor<SessionData>;
 
-export const bot = new Bot<MyContext>(process.env.TELEGRAM_BOT_TOKEN || '');
+const token = process.env.TELEGRAM_BOT_TOKEN;
+if (!token) {
+  console.warn("⚠️ TELEGRAM_BOT_TOKEN is not set!");
+}
+
+export const bot = new Bot<MyContext>(token || 'DUMMY_TOKEN_FOR_INITIALIZATION');
 
 // Session sozlamalari
 bot.use(session({
