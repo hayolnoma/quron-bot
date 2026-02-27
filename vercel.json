@@ -1,16 +1,23 @@
-
 {
   "version": 2,
   "builds": [
     {
-      "src": "index.ts",
+      "src": "index.tsx",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
+      "src": "/api/webhook",
+      "dest": "index.tsx"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "index.ts"
+      "dest": "index.tsx"
     }
   ]
 }
