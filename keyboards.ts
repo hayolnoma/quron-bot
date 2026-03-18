@@ -65,5 +65,11 @@ export const Keyboards = {
       .row()
       .text("📚 Suralar ro'yxati", "list_surahs")
       .text("🏠 Asosiy menyu", "back_to_main");
+  },
+
+  otherBots: () => {
+    return new InlineKeyboard()
+      .url("🎬 Islomiy Kinolar", "https://t.me/islomiy_kinolar_bot")
+      .url("✨ Islomiy Duolar", "https://t.me/islomiy_duolar_bot");
   }
 };

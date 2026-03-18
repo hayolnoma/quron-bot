@@ -384,15 +384,32 @@ bot.command('start', async (ctx, next) => {
   }
   // Agar startParam bo'lmasa yoki xato bo'lsa, oddiy startni ishlatamiz
   // Buning uchun biz avvalgi command('start') ni o'rniga shu yerni to'liq yozamiz
-  const welcomeText =
-    `👋 <b>Assalomu alaykum, ${ctx.from?.first_name}!</b>\n\n` +
-    `📖 <b>Qur'on Bot</b>ga xush kelibsiz.\n\n` +
-    `Ushbu bot orqali muqaddas Qur'on suralarini o'qishingiz, ma'nolarini o'rganishingiz va qiroatlarni tinglashingiz mumkin.\n\n` +
-    `👇 Davom etish uchun quyidagi menyundan foydalaning:`;
+    const welcomeText =
+    `✨ <b>Assalomu alaykum va rahmatullohi va barokatuh, ${ctx.from?.first_name}!</b>\n\n` +
+    `🕋 <b>Qur'on Bot — Sizning ma'naviy hamrohingiz.</b>\n` +
+    `────────────────────\n` +
+    `Ushbu bot yordamida muqaddas Qur'on olamiga chuqurroq sho'ng'ishingiz mumkin:\n\n` +
+    `📖 <b>Suralarni o'qish</b> ва ma'nolarini o'rganish;\n` +
+    `🇺🇿 <b>O'zbekcha tarjima</b> (Shayx Muhammad Sodiq Muhammad Yusuf);\n` +
+    `🎧 <b>Go'zal qiroatlar</b> (Mishari Rashid Alafasy);\n` +
+    `🔍 <b>Tezkor qidiruv</b> va inline imkoniyatlar.\n\n` +
+    `────────────────────\n` +
+    `🚀 <i>Iymon nuri qalbingizni yoritsin! Quyidagi menyu orqali davom eting:</i>`;
 
   await ctx.reply(welcomeText, {
     parse_mode: 'HTML',
     reply_markup: Keyboards.mainMenu()
+  });
+
+  const aboutText =
+    `🌟 <b>Bizning foydali loyihalarimiz:</b>\n` +
+    `────────────────────\n` +
+    `Iymon va ilm yo'lida xizmat qiluvchi boshqa botlarimiz bilan ham tanishing:\n\n` +
+    `👇 <b>Boshqa botlarga o'tish:</b>`;
+
+  await ctx.reply(aboutText, {
+    parse_mode: 'HTML',
+    reply_markup: Keyboards.otherBots()
   });
 });
 
