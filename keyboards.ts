@@ -71,5 +71,15 @@ export const Keyboards = {
     return new InlineKeyboard()
       .url("🎬 Islomiy Kinolar", "https://t.me/islomiy_kinolar_bot")
       .url("✨ Islomiy Duolar", "https://t.me/islomiy_duolar_bot");
+  },
+
+  helpKeyboard: (botUsername: string, shareText: string) => {
+    const encodedText = encodeURIComponent(shareText);
+    const shareUrl = `https://t.me/share/url?url=https://t.me/${botUsername}?start=true&text=${encodedText}`;
+    
+    return new InlineKeyboard()
+      .url("↗️ Yaqinlarga ulashish", shareUrl)
+      .row()
+      .text("🏠 Asosiy menyu", "back_to_main");
   }
 };
