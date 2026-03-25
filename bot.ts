@@ -25,6 +25,38 @@ bot.use(session({
 
 // --- BUYRUQLAR ---
 
+bot.command('help', async (ctx) => {
+  const botUsername = ctx.me.username;
+  const adminUsername = "@asking_robot"; // Yoki ctx.api.getMe() orqali boshqa malumotlar
+
+  const helpText = 
+    `🌙 <b>Qur'on Bot - Sizning ma'naviy hamrohingiz.</b> 📚\n\n` +
+    `Ushbu bot muqaddas Qur'onni o'rganishni xohlovchilar uchun maxsus ishlab chiqilgan bo'lib, quyidagi qulayliklarga ega:\n\n` +
+    `<b>Botimizning barcha bo'limlari:</b>\n` +
+    `▫️ <b>📖 Suralar ro'yxati</b> — <i>Suralarni tartib bilan ko'rish;</i>\n` +
+    `▫️ <b>🔍 Tezkor qidiruv</b> — <i>Nomi yoki raqami orqali topish;</i>\n` +
+    `▫️ <b>🕌 Arabcha matn</b> — <i>Oyatlar oraliq matnini olish;</i>\n` +
+    `▫️ <b>🎧 Audio qiroatlar</b> — <i>Go'zal ovozda tinglash;</i>\n` +
+    `▫️ <b>📚 Foydalanish qo'llanmasi</b> — <i>Batafsil ma'lumotlar.</i>\n\n` +
+    `<b>Nega aynan ushbu bot?</b>\n` +
+    `🌟 Bot orqali Qur'onni o'qish endi yanada oson va qulay. Har bir oyatning o'zbekcha ma'nosi bilan birga arabcha matni va audiosi mavjudligi ilmingiz yanada ziyoda bo'lishiga xizmat qiladi.\n\n` +
+    `Taklif va xatoliklar yuzasidan: ${adminUsername}`;
+
+  const shareText = 
+    `🌙 Qur'on Bot - Sizning ma'naviy hamrohingiz. 📚\n\n` +
+    `Ushbu botda:\n` +
+    `📖 Suralar ro'yxati\n` +
+    `🔍 Tezkor qidiruv\n` +
+    `🕌 Arabcha matn va Tarjima\n` +
+    `🎧 Audio qiroatlar\n\n` +
+    `Siz ham foydalanib ko'ring!`;
+
+  await ctx.reply(helpText, {
+    parse_mode: 'HTML',
+    reply_markup: Keyboards.helpKeyboard(botUsername, shareText)
+  });
+});
+
 // --- CALLBACK HANDLERS ---
 
 bot.callbackQuery('list_surahs', async (ctx) => {
